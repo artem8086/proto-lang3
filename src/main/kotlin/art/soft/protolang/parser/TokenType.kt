@@ -2,7 +2,7 @@ package art.soft.protolang.parser
 
 import art.soft.protolang.parser.TokenType.Type.*
 
-enum class TokenType(value: String = "", type: Type, isOperator: Boolean = type == OPERATOR) {
+enum class TokenType(val value: String = "", val type: Type, val isOperator: Boolean = type == OPERATOR) {
     NUMBER_INTEGER(type = VALUE),
     NUMBER_INTEGER_BIN(type = VALUE),
     NUMBER_INTEGER_DEC(type = VALUE),
@@ -101,14 +101,18 @@ enum class TokenType(value: String = "", type: Type, isOperator: Boolean = type 
     LBRACE("{", OPERATOR),
     RBRACE("}", OPERATOR),
 
-    DECORATOR("@", OPERATOR),
+    DECORATOR("@", OPERATOR);
 
-    EOF("eof", OTHER);
+    companion object {
+        fun toMapByType(type: Type) = values().asSequence()
+            .filter { it.type == type }
+            .map { it.name to it }
+            .toMap()
+    }
 
     enum class Type {
         VALUE,
         KEYWORD,
         OPERATOR,
-        OTHER
     }
 }

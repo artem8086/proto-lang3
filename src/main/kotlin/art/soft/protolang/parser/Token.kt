@@ -1,11 +1,11 @@
 package art.soft.protolang.parser
 
 data class Token(
-    private val type: TokenType,
-    private val text: String?,
-    private val position: SourcePosition
+    val type: TokenType,
+    val value: String?,
+    val position: SourcePosition
 ) {
     fun position() = position.toString()
 
-    override fun toString() = "$type $position $text"
+    override fun toString() = "$type $position $value"
 }

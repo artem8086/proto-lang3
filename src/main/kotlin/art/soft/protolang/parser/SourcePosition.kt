@@ -1,15 +1,22 @@
 package art.soft.protolang.parser
 
-data class SourcePosition(val row: Int, val col: Int, val indent: Int) {
+import art.soft.protolang.config.CompilerOptions
 
-    override fun toString() = "[$row:$col]"
+interface SourcePosition {
 
-    fun getErrorMessage(message: String, lines: Array<String>) = buildString {
-        append("at line ").append(toString()).append('\n')
-        try {
-            append(lines[row - 1]).append('\n')
-            append(" ".repeat(col)).append("^\n")
-        } catch (ignored: ArrayIndexOutOfBoundsException) {}
-        append(message)
-    }
+    val filename: String?
+
+    val source: String?
+
+    val row: Int
+
+    val col: Int
+
+    val indent: Int
+
+    val lineStart: Int
+
+    val lineEnd: Int
+
+    fun getErrorMessage(message: String, options: CompilerOptions): String
 }
