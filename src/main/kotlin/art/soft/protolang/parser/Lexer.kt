@@ -170,9 +170,13 @@ class Lexer(
                 }
             }
             '.' -> {
+                addToken(TokenType.NUMBER_INTEGER, number)
                 addToken(if (next() == '.') TokenType.DOT_DOT_DOT else TokenType.RANGE)
             }
-            else -> addToken(TokenType.DOT)
+            else -> {
+                addToken(TokenType.NUMBER_INTEGER, number)
+                addToken(TokenType.DOT)
+            }
         }
     }
 
@@ -286,10 +290,10 @@ class Lexer(
     private fun getCurrentPosition() = position.copy(row = row, col = col)
 
     private fun Char.isIdentifierStart(): Boolean =
-        this in 'a'..'z' || this in 'A'..'Z' || this == '_'
+        this.isLetter() || this == '_'
 
     private fun Char.isIdentifierPart(): Boolean =
-        this in '0'..'9' || this in 'a'..'z' || this in 'A'..'Z' || this == '_'
+        this.isLetterOrDigit() || this == '_'
 
     private fun trySkipIndentation(): Int {
         while (true) {
