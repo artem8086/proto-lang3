@@ -9,7 +9,7 @@ class Lexer(
 
     filename: String? = null,
 
-    private val options: CompilerOptions = CompilerOptions(),
+    private val options: CompilerOptions = CompilerOptions.DEFAULT,
 
     private val input: CharIterator = iteratorFromSource(source, filename, options),
 
@@ -50,6 +50,8 @@ class Lexer(
 
     private var position = Position(source = source, filename = filename)
 
+    private var isFatal = false
+
     fun tokenize(): List<Token> {
         pos--
         col--
@@ -59,14 +61,7 @@ class Lexer(
 
         while (hasNext()) tokenizeAtom()
 
-        if (errors.isNotEmpty()) {
-            throw LexerException(
-                errors.joinToString("\n\n") { e ->
-                    e.position.getErrorMessage("LexerError: ${e.message}", options)
-                },
-                errors
-            )
-        }
+        if (errors.isNotEmpty()) throw LexerException("LexerException", errors)
 
         return tokens
     }
@@ -80,12 +75,15 @@ class Lexer(
             current == '`' -> tokenizeExtendedIdentifier()
             current == '#' -> tokenizeComment()
             current == '\"' || current == '\'' -> tokenizeString(current)
+            current == '$' -> {
+                val nextChar = next()
+                if (nextChar == '\'' || nextChar == '\"') tokenizeString(nextChar, true)
+                else addToken(TokenType.DOLLAR)
+            }
             current in OPERATOR_CHARS -> tokenizeOperator()
             current in ALLOWED_WHITESPACES -> next()
             current in NEW_LINE_CHARS -> insertNewLine()
-            else -> {
-                error("Unknown character '$current'")
-            }
+            else -> error("Unknown character '$current'")
         }
     }
 
@@ -184,6 +182,8 @@ class Lexer(
         var signChar = next()
         if (signChar != '-' && signChar != '+') {
             signChar = '+'
+        } else {
+            next()
         }
         addToken(TokenType.NUMBER_FLOAT, number + 'e' + signChar + readNumber())
     }
@@ -246,7 +246,7 @@ class Lexer(
         while (true) {
             if (current == '`') break
             if (current == '\u0000' || current == '\n' || current == '\r') {
-                error("Reached end of line while parsing extended word.")
+                error("Reached end of line while parsing extended word")
                 break
             }
             buffer.append(current)
@@ -269,8 +269,157 @@ class Lexer(
         }
     }
 
-    private fun tokenizeString(openChar: Char) {
-        TODO("Not yet implemented")
+    private fun tokenizeString(openChar: Char, interpolated: Boolean = false) {
+        clearBuffer()
+        val nextChar = next() // skip start character
+        if (nextChar == openChar) {
+            if (next() != openChar) addToken(TokenType.STRING) // Empty string
+            else tokenizeRawString(openChar)
+            return
+        }
+        while (true) {
+            val current = peek()
+            when (current) {
+                openChar -> break
+                '\n' -> {
+                    error("Not allowed new line in string literal", getCurrentPosition())
+                    insertNewLine()
+                    break
+                }
+                '{' -> if (interpolated) {
+                    tokenizeInterpolatedStringValue()
+                    continue
+                }
+                '\u0000' -> {
+                    error("Reached end of source code while parsing text string")
+                    break
+                }
+            }
+            buffer.append(if (current == '\\') charEscape() else current)
+            next()
+        }
+        if (peek() == openChar) next() // skip closing character
+
+        addToken(TokenType.STRING, buffer.toString())
+    }
+
+    private fun tokenizeRawString(openChar: Char, interpolated: Boolean = false) {
+        val indentation = options.indentation.repeat(position.indent)
+        val nextChar = next() // skip open raw string
+        if (nextChar == '\n') insertRawStringNewLine(indentation)
+        while (true) {
+            val current = peek()
+            when (current) {
+                openChar -> {
+                    if (next() == openChar) {
+                        // End of raw string
+                        if (next() == openChar) break
+                        else buffer.append(openChar)
+                    }
+                    buffer.append(openChar)
+                    continue
+                }
+                '{' -> if (interpolated) {
+                    tokenizeInterpolatedStringValue()
+                    continue
+                }
+                '\n' -> {
+                    insertRawStringNewLine(indentation)
+                    buffer.append('\n')
+                    continue
+                }
+                '\u0000' -> {
+                    error("Reached end of source code while parsing text string")
+                    break
+                }
+            }
+            buffer.append(current)
+            next()
+        }
+        if (peek() == openChar) next() // skip closing character
+
+        if (buffer.endsWith('\n')) buffer.setLength(buffer.length - 1)
+
+        addToken(TokenType.STRING, buffer.toString())
+    }
+
+    private fun insertRawStringNewLine(indentation: String) {
+        setCurrentLineEnd(pos)
+        if (next() == '\r') next()
+        row++
+        col = 1
+        for (spaceChar in indentation) {
+            if (peek() != spaceChar) {
+                error("Invalid indentation in raw string literal", getCurrentPosition())
+                break
+            }
+            next()
+        }
+    }
+
+    private fun tokenizeInterpolatedStringValue() {
+        addToken(TokenType.STRING, buffer.toString())
+        position = getCurrentPosition()
+        addToken(TokenType.INTERPOLATION_START)
+        next() // skip '{'
+        var currentTokenIndex = tokens.size
+        var openBraceCount = 0
+        while (hasNext()) {
+            tokenizeAtom()
+            if (tokens.size != currentTokenIndex) {
+                val lastToken = tokens.last()
+                when (lastToken.type) {
+                    TokenType.LBRACE -> openBraceCount++
+                    TokenType.RBRACE -> {
+                        if (openBraceCount == 0) {
+                            tokens.removeLast()
+                            tokens.add(Token(
+                                type = TokenType.INTERPOLATION_END,
+                                position = lastToken.position
+                            ))
+                            break
+                        } else openBraceCount--
+                    }
+                }
+                currentTokenIndex = tokens.size
+            }
+        }
+        position = getCurrentPosition()
+        clearBuffer()
+    }
+
+    private fun charEscape(): Char {
+        return when (val nextChar = next()) {
+            '0' -> '\u0000'
+            'b' -> '\b'
+            'n' -> '\n'
+            'r' -> '\r'
+            't' -> '\t'
+            '\n' -> {
+                error("Not allowed new line in string literal", getCurrentPosition())
+                insertNewLine()
+                '\n'
+            }
+            'x' -> readHexCharacter(2)
+            'u' -> readHexCharacter(4)
+            else -> nextChar
+        }
+    }
+
+    private fun readHexCharacter(count: Int): Char {
+        var value = 0
+        for (i in (count * 4) downTo 0 step 4) {
+            val digit = next()
+            if (!digit.isHexNumber()) {
+                error(
+                    "Invalid hex representation of number. Must contain $count hex digit",
+                    getCurrentPosition()
+                )
+                break
+            }
+            value += Character.digit(digit, 16) shr i
+        }
+        return value.toChar()
     }
 
     private fun tokenizeOperator() {
@@ -296,17 +445,16 @@ class Lexer(
         this.isLetterOrDigit() || this == '_'
 
     private fun trySkipIndentation(): Int {
-        while (true) {
-            var indent = 0;
+        var indent = 0
 
+        while (true) {
             for ((index, spaceChar) in options.indentation.withIndex()) {
-                if (index == 0) {
-                    if (peek() != spaceChar) return indent
-                }
-                if (next() != spaceChar) {
+                if (peek() != spaceChar) {
+                    if (index == 0) return indent
                     error("Incorrect indentation")
                     return indent
                 }
+                next()
             }
             indent += 1
         }
@@ -326,10 +474,12 @@ class Lexer(
     }
 
     private fun setCurrentLineEnd(lineEnd: Int) {
-        for (index in currentLineIndex..tokens.size) {
-            (tokens[index].position as Position).lineEnd = lineEnd
+        if (currentLineIndex != tokens.size) {
+            for (index in currentLineIndex until tokens.size) {
+                (tokens[index].position as Position).lineEnd = lineEnd
+            }
+            currentLineIndex = tokens.size
         }
-        currentLineIndex = tokens.size
     }
 
     private fun peek() = peekc
@@ -341,14 +491,17 @@ class Lexer(
         return peekc
     }
 
-    private fun hasNext() = input.hasNext()
+    private fun hasNext() = peekc != '\u0000'
 
-    private fun addToken(type: TokenType, text: String = "") {
-        tokens.add(Token(type, text, position))
+    private fun addToken(type: TokenType, value: String = "") {
+        tokens.add(Token(type, value, position))
     }
 
-    private fun error(message: String) {
-        errors += Error(message, position)
+    private fun error(message: String, position: SourcePosition = this.position, fatal: Boolean = false) {
+        if (!isFatal) {
+            errors += Error(message, position)
+            isFatal = fatal
+        }
     }
 
     data class Position(
@@ -369,6 +522,8 @@ class Lexer(
             }
             append(message)
         }
+
+        override fun toString() = "[${row}:${col}]"
     }
 
     data class Error(val message: String, val position: SourcePosition)

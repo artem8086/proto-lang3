@@ -45,6 +45,7 @@ enum class TokenType(val value: String = "", val type: Type, val isOperator: Boo
     LET("let", KEYWORD),
     VAR("var", KEYWORD),
     TYPE("type", KEYWORD),
+    LAZY("lazy", KEYWORD),
 
     THIS("this", KEYWORD),
 
@@ -67,6 +68,7 @@ enum class TokenType(val value: String = "", val type: Type, val isOperator: Boo
     PLUS("+", OPERATOR),
     MINUS("-", OPERATOR),
     MUL("*", OPERATOR),
+    DIV("/", OPERATOR),
     MOD("%", OPERATOR),
     POW("^", OPERATOR),
 
@@ -101,12 +103,17 @@ enum class TokenType(val value: String = "", val type: Type, val isOperator: Boo
     LBRACE("{", OPERATOR),
     RBRACE("}", OPERATOR),
 
-    DECORATOR("@", OPERATOR);
+    DOLLAR("$", OPERATOR),
+
+    DECORATOR("@", OPERATOR),
+
+    INTERPOLATION_START(type = OTHER),
+    INTERPOLATION_END(type = OTHER);
 
     companion object {
         fun toMapByType(type: Type) = values().asSequence()
             .filter { it.type == type }
-            .map { it.name to it }
+            .map { it.value to it }
             .toMap()
     }
 
@@ -114,5 +121,6 @@ enum class TokenType(val value: String = "", val type: Type, val isOperator: Boo
         VALUE,
         KEYWORD,
         OPERATOR,
+        OTHER
     }
 }

@@ -4,8 +4,8 @@ plugins {
     kotlin("jvm") version "1.6.10"
 }
 
-group = "me.artem"
-version = "1.0-SNAPSHOT"
+group = "art.soft"
+version = "0.1"
 
 repositories {
     mavenCentral()
