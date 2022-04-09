@@ -2,14 +2,15 @@ package art.soft.protolang.parser
 
 import art.soft.protolang.parser.TokenType.Type.*
 
-enum class TokenType(val value: String = "", val type: Type, val isOperator: Boolean = type == OPERATOR) {
-    NUMBER_INTEGER(type = VALUE),
+enum class TokenType(val value: String = "", val type: Type, val isIdentifier: Boolean = type == OPERATOR) {
+    NUMBER_INTEGER(type = VALUE, isIdentifier = true),
     NUMBER_INTEGER_BIN(type = VALUE),
     NUMBER_INTEGER_DEC(type = VALUE),
     NUMBER_INTEGER_OCT(type = VALUE),
     NUMBER_INTEGER_HEX(type = VALUE),
     NUMBER_FLOAT(type = VALUE),
-    IDENTIFIER(type = VALUE),
+    IDENTIFIER(type = VALUE, isIdentifier = true),
+    IDENTIFIER_LITERAL(type = VALUE, isIdentifier = true),
     STRING(type = VALUE),
     REGEXP(type = VALUE),
     DOCUMENTATION(type = VALUE),
@@ -56,9 +57,9 @@ enum class TokenType(val value: String = "", val type: Type, val isOperator: Boo
     YIELD("yield", KEYWORD),
 
     // Boolean operations
-    NOT("not", KEYWORD),
-    AND("and", KEYWORD),
-    OR("or", KEYWORD),
+    NOT("not", KEYWORD, true),
+    AND("and", KEYWORD, true),
+    OR("or", KEYWORD, true),
 
     // Contains operator
     IN("in", KEYWORD, true),
@@ -74,11 +75,11 @@ enum class TokenType(val value: String = "", val type: Type, val isOperator: Boo
     SHIFT_R(">>", OPERATOR),
     SHIFT_L("<<", OPERATOR),
 
-    REFERENCE("&", OPERATOR),
+    REFERENCE("&", OPERATOR, false),
 
-    PIPELINE("|", OPERATOR),
+    PIPELINE("|", OPERATOR, false),
 
-    ASSIGN("=", OPERATOR),
+    ASSIGN("=", OPERATOR, false),
 
     EQ("==", OPERATOR),
     NE("!=", OPERATOR),
@@ -87,28 +88,31 @@ enum class TokenType(val value: String = "", val type: Type, val isOperator: Boo
     LT("<", OPERATOR),
     GT(">", OPERATOR),
 
-    QUESTION("?", OPERATOR),
     NULL_COALESCE("??", OPERATOR),
-    DOT(".", OPERATOR),
-    COMMA(",", OPERATOR),
     RANGE("..", OPERATOR),
-    DOT_DOT_DOT("...", OPERATOR),
-    COLON(":", OPERATOR),
-    SEMICOLON(";", OPERATOR),
 
-    LPAREN("(", OPERATOR),
-    RPAREN(")", OPERATOR),
-    LBRACKET("[", OPERATOR),
-    RBRACKET("]", OPERATOR),
-    LBRACE("{", OPERATOR),
-    RBRACE("}", OPERATOR),
+    QUESTION("?", OPERATOR, false),
+    DOT(".", OPERATOR, false),
+    COMMA(",", OPERATOR, false),
+    DOT_DOT_DOT("...", OPERATOR, false),
+    COLON(":", OPERATOR, false),
+    SEMICOLON(";", OPERATOR, false),
 
-    DOLLAR("$", OPERATOR),
+    LPAREN("(", OPERATOR, false),
+    RPAREN(")", OPERATOR, false),
+    LBRACKET("[", OPERATOR, false),
+    RBRACKET("]", OPERATOR, false),
+    LBRACE("{", OPERATOR, false),
+    RBRACE("}", OPERATOR, false),
 
-    DECORATOR("@", OPERATOR),
+    DOLLAR("$", OPERATOR, false),
+
+    DECORATOR("@", OPERATOR, false),
 
     INTERPOLATION_START(type = OTHER),
-    INTERPOLATION_END(type = OTHER);
+    INTERPOLATION_END(type = OTHER),
+
+    EOF("eof", OTHER);
 
     companion object {
         fun toMapByType(type: Type) = values().asSequence()

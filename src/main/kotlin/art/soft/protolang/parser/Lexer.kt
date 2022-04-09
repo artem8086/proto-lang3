@@ -232,7 +232,7 @@ class Lexer(
         val word = buffer.toString()
         val keyword = KEYWORDS[word]
         if (keyword != null) {
-            addToken(keyword)
+            addToken(keyword, keyword.value)
         } else {
             addToken(TokenType.IDENTIFIER, word)
         }
@@ -254,7 +254,7 @@ class Lexer(
         }
         if (current == '`') next() // skip closing `
 
-        addToken(TokenType.IDENTIFIER, buffer.toString())
+        addToken(TokenType.IDENTIFIER_LITERAL, buffer.toString())
     }
 
     private fun tokenizeComment() {
@@ -428,7 +428,8 @@ class Lexer(
         while (true) {
             val nextText = text + current
             if (text.isNotEmpty() && !OPERATORS.containsKey(nextText)) {
-                addToken(OPERATORS[text]!!)
+                val operator = OPERATORS[text]!!
+                addToken(operator, operator.value)
                 return
             }
             text = nextText
