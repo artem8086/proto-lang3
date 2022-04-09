@@ -165,11 +165,11 @@ class LexerTest {
     }
 
     @Test fun testOperators2Char() {
-        val input = "== != <= >= ==+ >=- ->"
+        val input = "== != <= >= ==+ >=- -> >> << ??"
         val result = Lexer(source = input).tokenize()
 
         assertEquals(
-            listOf(EQ, NE, LTE, GTE, EQ, PLUS, GTE, MINUS, MINUS, GT),
+            listOf(EQ, NE, LTE, GTE, EQ, PLUS, GTE, MINUS, MINUS, GT, SHIFT_R, SHIFT_L, NULL_COALESCE),
             result.map { it.type }
         )
     }

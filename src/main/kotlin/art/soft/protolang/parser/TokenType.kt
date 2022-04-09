@@ -88,6 +88,7 @@ enum class TokenType(val value: String = "", val type: Type, val isOperator: Boo
     GT(">", OPERATOR),
 
     QUESTION("?", OPERATOR),
+    NULL_COALESCE("??", OPERATOR),
     DOT(".", OPERATOR),
     COMMA(",", OPERATOR),
     RANGE("..", OPERATOR),
