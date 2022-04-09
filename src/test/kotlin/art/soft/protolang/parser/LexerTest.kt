@@ -58,11 +58,11 @@ class LexerTest {
     }
 
     @Test fun testKeywords() {
-        val input = "if elif else for try catch finally break continue return not and or in is as let var type lazy"
+        val input = "if elif else for try catch finally break continue return not and or in is as let var type"
         val result = Lexer(source = input).tokenize()
 
         assertEquals(
-            listOf(IF, ELIF, ELSE, FOR, TRY, CATCH, FINALLY, BREAK, CONTINUE, RETURN, NOT, AND, OR, IN, IS, AS, LET, VAR, TYPE, LAZY),
+            listOf(IF, ELIF, ELSE, FOR, TRY, CATCH, FINALLY, BREAK, CONTINUE, RETURN, NOT, AND, OR, IN, IS, AS, LET, VAR, TYPE),
             result.map { it.type }
         )
     }

@@ -45,7 +45,6 @@ enum class TokenType(val value: String = "", val type: Type, val isOperator: Boo
     LET("let", KEYWORD),
     VAR("var", KEYWORD),
     TYPE("type", KEYWORD),
-    LAZY("lazy", KEYWORD),
 
     THIS("this", KEYWORD),
 
