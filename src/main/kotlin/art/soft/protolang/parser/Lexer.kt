@@ -16,21 +16,23 @@ class Lexer(
     private val collectComments: Boolean = false
 ) {
     companion object {
-        const val ALLOWED_WHITESPACES = " "
+        private const val ALLOWED_WHITESPACES = " "
 
-        const val NEW_LINE_CHARS = "\n"
+        private const val NEW_LINE_CHARS = "\n"
 
-        const val OPERATOR_CHARS = "@+-*/%()[]{}=<>!&|.,^?:;"
+        private const val OPERATOR_CHARS = "@+-*/%()[]{}=<>!&|.,^?:;"
 
-        val OPERATORS = TokenType.toMapByType(TokenType.Type.OPERATOR)
+        private val OPERATORS = TokenType.toMapByType(TokenType.Type.OPERATOR)
 
-        val KEYWORDS = TokenType.toMapByType(TokenType.Type.KEYWORD)
+        private val KEYWORDS = TokenType.toMapByType(TokenType.Type.KEYWORD)
 
-        val UNDERSCORE_REGEX = Regex("\\_{2,}")
+        private val UNDERSCORE_REGEX = Regex("\\_{2,}")
 
-        fun iteratorFromSource(source: String?, filename: String?, options: CompilerOptions): CharIterator {
+        private fun iteratorFromSource(source: String?, filename: String?, options: CompilerOptions): CharIterator {
             return source?.iterator() ?: "".iterator()
         }
+
+        val EOF_TOKEN = Token(TokenType.EOF, "", Position(null, null, -1, -1, -1, -1, -1))
     }
 
     private var pos: Int = 0
