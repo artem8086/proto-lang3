@@ -30,19 +30,20 @@ class Parser(
         return MethodCallExpression(sourcePos, fieldRef, arguments.toList())
     }
 
-    private fun constructExpression(base: Expression, vararg types: TokenType): Expression {
-        var result = base
+    private inline fun constructExpression(vararg types: TokenType, baseExpression: () -> Expression): Expression {
+        var result = baseExpression()
+        var isMatch = true
 
-        while (true) {
+        while (isMatch) {
+            isMatch = false
             if (checkIndent()) {
                 for (type in types) {
                     if (match(type)) {
-                        result = methodCallConstruct(type.value, match(QUESTION), expression()) { result }
-                        continue
+                        result = methodCallConstruct(type.value, checkIndent() && match(QUESTION), baseExpression()) { result }
+                        isMatch = true
                     }
                 }
             }
-            break;
         }
 
         return result
@@ -62,21 +63,21 @@ class Parser(
         return result
     }
 
-    private fun infixOperator() = constructExpression(logicalOr(), IDENTIFIER, IDENTIFIER_LITERAL)
+    private fun infixOperator() = constructExpression(IDENTIFIER, IDENTIFIER_LITERAL) { logicalOr() }
 
-    private fun logicalOr() = constructExpression(logicalAnd(), OR)
+    private fun logicalOr() = constructExpression(OR) { logicalAnd() }
 
-    private fun logicalAnd() = constructExpression(equality(), AND)
+    private fun logicalAnd() = constructExpression(AND) { equality() }
 
-    private fun equality() = constructExpression(conditional(), EQ, NE)
+    private fun equality() = constructExpression(EQ, NE) { conditional() }
 
-    private fun conditional() = constructExpression(shift(), LT, LTE, GT, GTE)
+    private fun conditional() = constructExpression(LT, LTE, GT, GTE) { shift() }
 
-    private fun shift() = constructExpression(additive(), SHIFT_L, SHIFT_R)
+    private fun shift() = constructExpression(SHIFT_L, SHIFT_R) { additive() }
 
-    private fun additive() = constructExpression(multiplicative(), PLUS, MINUS)
+    private fun additive() = constructExpression(PLUS, MINUS) { multiplicative() }
 
-    private fun multiplicative() = constructExpression(unary(), MUL, DIV, MOD, POW)
+    private fun multiplicative() = constructExpression(MUL, DIV, MOD, POW) { unary() }
 
     private fun unary(): Expression {
         if (checkIndent()) {

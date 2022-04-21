@@ -30,7 +30,7 @@ abstract class Scanner(
 
     protected fun checkIndent(): Boolean {
         val position = get().position
-        if (row < 0) return false
+        if (position.row < 0) return false
         if (position.row == row) return true
         val tokenIndent = position.indent + 1
         if (tokenIndent > indent) {
