@@ -48,6 +48,7 @@ enum class TokenType(val value: String = "", val type: Type, val isIdentifier: B
     TYPE("type", KEYWORD),
 
     THIS("this", KEYWORD),
+    FIELD("field", KEYWORD),
 
     // Type operation
     IS("is", KEYWORD),
@@ -88,10 +89,10 @@ enum class TokenType(val value: String = "", val type: Type, val isIdentifier: B
     LT("<", OPERATOR),
     GT(">", OPERATOR),
 
-    NULL_COALESCE("??", OPERATOR),
     RANGE("..", OPERATOR),
 
     QUESTION("?", OPERATOR, false),
+    NONE_COALESCE("??", OPERATOR, false),
     DOT(".", OPERATOR, false),
     COMMA(",", OPERATOR, false),
     DOT_DOT_DOT("...", OPERATOR, false),

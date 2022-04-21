@@ -169,7 +169,7 @@ class LexerTest {
         val result = Lexer(source = input).tokenize()
 
         assertEquals(
-            listOf(EQ, NE, LTE, GTE, EQ, PLUS, GTE, MINUS, MINUS, GT, SHIFT_R, SHIFT_L, NULL_COALESCE),
+            listOf(EQ, NE, LTE, GTE, EQ, PLUS, GTE, MINUS, MINUS, GT, SHIFT_R, SHIFT_L, NONE_COALESCE),
             result.map { it.type }
         )
     }
@@ -192,7 +192,7 @@ class LexerTest {
         val result = Lexer(source = input).tokenize()
 
         assertEquals(
-            listOf(IDENTIFIER, ASSIGN, NUMBER_INTEGER),
+            listOf(IDENTIFIER_LITERAL, ASSIGN, NUMBER_INTEGER),
             result.map { it.type }
         )
     }
